@@ -1,4 +1,4 @@
-# ClassificationofTreeQuality
+# ClassificationofLogQuality
 
 About:
 
