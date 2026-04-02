@@ -2,9 +2,8 @@ import pandas as pd
 import tkinter as tk
 from tkinter import filedialog
 
-# -----------------------------
 # 1. Define your classification rules based on height, diameter, and defects (numerical)
-# -----------------------------
+
 def classify_tree(row):
     height = row['Height_m']
     diameter = row['Diameter_cm']
@@ -18,9 +17,7 @@ def classify_tree(row):
     else:
         return 'Low'
 
-# -----------------------------
 # 2. Load data from file
-# -----------------------------
 
 # Hide the root window
 root = tk.Tk()
@@ -42,20 +39,19 @@ elif file_path.endswith('.xlsx') or file_path.endswith('.xls'):
 else:
     raise ValueError("Unsupported file type! Please use CSV, TXT, or Excel.")
 
-# -----------------------------
 # 3. Apply classification
-# -----------------------------
+
 data['Quality'] = data.apply(classify_tree, axis=1)
 
-# -----------------------------
-# 4. Save results
-# -----------------------------
+
+# 4. Save the result
+
 output_file = "C:/Users/Dimitris/Desktop/classified_trees_with_defect_numerical_output.xlsx"
 data.to_excel(output_file, index=False)
 print(f"Classification complete! Results saved to {output_file}")
 
-# -----------------------------
-# 5. Optional: Print a summary
-# -----------------------------
+
+# 5. Optional: Print a summary of the result in the console
+
 print("\nTree Quality Summary:")
 print(data['Quality'].value_counts())
