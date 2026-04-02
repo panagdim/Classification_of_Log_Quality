@@ -1,4 +1,4 @@
-# ClassificationofLogQuality
+# Classification of Log Quality
 
 About:
 
