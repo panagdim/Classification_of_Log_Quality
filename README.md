@@ -8,9 +8,11 @@ This is a general classification tool. Different countries may have different qu
 You will also find three Excel files provided as test data:
 
 a) Classification of log quality based on categorical data-> Referring to the ClassificationLogQualityCategorical.py
+
 b) Classification of log quality based on numerical data -> Referring to the ClassificationLogQualityNumerical.py
+
 c) QualityAssessment -> Referring to the Advanced_Log_Classification.py
 
-Application: Forestry
+Application Domain: Forestry
 
 Note: These datasets contain random data for testing purposes only. You are free to add your own ground truth measurements to evaluate the results.
