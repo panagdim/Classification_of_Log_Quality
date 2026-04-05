@@ -2,6 +2,7 @@ import pandas as pd
 import tkinter as tk
 from tkinter import filedialog
 
+# -------------VERSION 1.1------------------------
 # 1. Define classification rules based on height, diameter, and defects (categorical)
 
 def classify_tree(row):
