@@ -2,7 +2,8 @@ import pandas as pd
 import tkinter as tk
 from tkinter import filedialog
 
-# -------------Advanced Version Considering More Rules-------------
+# -------------VERSION 1.3------------------------
+# -------------Considering More Rules-------------
 # -----------------------------
 # 1. Classification Function
 # -----------------------------
