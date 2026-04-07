@@ -1,18 +1,47 @@
-# Classification of Log Quality
+🌲 About
 
-About:
+This project is a Python-based application for log quality classification using forest inventory data. It processes datasets in CSV, Excel, or TXT format containing tree attributes such as:
 
-A Python-based application for general log quality classification using forest inventory data. It processes datasets (CSV, Excel, or TXT) containing tree attributes such as height, diameter at breast height (DBH), and defect indicators (i.e., knots, forking, cracks, diseases). Each log is assigned a quality class.
-This is a general classification tool. Different countries may have different quality standards (e.g., numeric 1–7, or categorical like Good/Medium/Low). The classification criteria can be modified in the source code to match local standards.
+# Tree height
+# Diameter at Breast Height (DBH)
+# Defect indicators (e.g., knots, forking, cracks, diseases)
 
-You will also find three Excel files provided as test data:
+Based on these inputs, the application assigns a quality class to each log.
 
-a) Classification of log quality based on categorical data-> Referring to the ClassificationLogQualityCategorical.py
+🧠 Classification Approach
 
-b) Classification of log quality based on numerical data -> Referring to the ClassificationLogQualityNumerical.py
+This is a flexible, general-purpose classification tool. Since log quality standards vary across regions and countries, the system is designed to be easily adaptable:
 
-c) QualityAssessment -> Referring to the Advanced_Log_Classification.py
+Supports numerical classification systems (e.g., classes 1–7)
+Supports categorical systems (e.g., Good / Medium / Low)
+🛠️ Classification rules can be customized directly in the source code to match local forestry standards
+📊 Included Test Data & Scripts
 
-Application Domain: Forestry
+The repository includes three example Excel datasets along with their corresponding Python scripts:
 
-Note: These datasets contain random data for testing purposes only. You are free to add your own ground truth measurements to evaluate the results.
+Categorical Classification
+📄 Dataset: Classification of log quality based on categorical data
+🧪 Script: ClassificationLogQualityCategorical.py
+
+Numerical Classification
+📄 Dataset: Classification of log quality based on numerical data
+🧪 Script: ClassificationLogQualityNumerical.py
+
+Advanced Quality Assessment
+📄 Dataset: QualityAssessment
+🧪 Script: Advanced_Log_Classification.py
+🌍 Application Domain
+
+Forestry
+Forest inventory analysis
+Timber quality assessment
+
+⚠️ Note
+
+The provided datasets contain randomly generated data for testing and demonstration purposes only.
+
+You are encouraged to:
+
+Replace them with your own ground truth measurements
+Adjust classification rules to better reflect real-world conditions
+Validate and evaluate model performance using domain-specific data
