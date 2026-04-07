@@ -2,9 +2,9 @@
 
 This project is a Python-based application for log quality classification using forest inventory data. It processes datasets in CSV, Excel, or TXT format containing tree attributes such as:
 
-# Tree height
-# Diameter at Breast Height (DBH)
-# Defect indicators (e.g., knots, forking, cracks, diseases)
+Tree height
+Diameter at Breast Height (DBH)
+Defect indicators (e.g., knots, forking, cracks, diseases)
 
 Based on these inputs, the application assigns a quality class to each log.
 
@@ -21,14 +21,14 @@ The repository includes three example Excel datasets along with their correspond
 
 Categorical Classification
 📄 Dataset: Classification of log quality based on categorical data
-🧪 Script: ClassificationLogQualityCategorical.py
+🧪 Script: Classification of Log Quality Categorical.py
 
 Numerical Classification
 📄 Dataset: Classification of log quality based on numerical data
-🧪 Script: ClassificationLogQualityNumerical.py
+🧪 Script: Classification of Log Quality Numerical.py
 
 Advanced Quality Assessment
-📄 Dataset: QualityAssessment
+📄 Dataset: Quality Assessment
 🧪 Script: Advanced_Log_Classification.py
 🌍 Application Domain
 
@@ -45,3 +45,5 @@ You are encouraged to:
 Replace them with your own ground truth measurements
 Adjust classification rules to better reflect real-world conditions
 Validate and evaluate model performance using domain-specific data
+
+Contributor: Dimitris Panagiotidis
