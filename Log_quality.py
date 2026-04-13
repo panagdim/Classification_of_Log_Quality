@@ -1,4 +1,4 @@
-# GUI | Including some advanced features
+# GUI 
 
 import pandas as pd
 import math
