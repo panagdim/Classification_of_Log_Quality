@@ -1,5 +1,4 @@
 # GUI 
-
 import pandas as pd
 import math
 import tkinter as tk
@@ -17,6 +16,7 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 # =========================
 # UTILITIES
 # =========================
+
 def clamp(value, min_val, max_val):
     return max(min_val, min(max_val, value))
 
@@ -33,6 +33,7 @@ def calculate_volume(length, diameter_cm):
 # =========================
 # MODEL
 # =========================
+
 def evaluate_log(length, diameter, knots, cracks,
                  has_forking, has_bend, has_disease):
 
@@ -67,7 +68,6 @@ def evaluate_log(length, diameter, knots, cracks,
         interaction += length * 0.4
 
     score = size_score - penalty - interaction
-
     if no_defects:
         score += 10
 
@@ -84,8 +84,9 @@ def evaluate_log(length, diameter, knots, cracks,
 
 
 # =========================
-# EXCEL FORMAT
+# EXCEL FORMATTING
 # =========================
+
 def format_excel(path):
     wb = load_workbook(path)
     ws = wb.active
@@ -127,10 +128,11 @@ def format_excel(path):
 # =========================
 # GUI APP
 # =========================
+
 class ForestApp:
     def __init__(self, root):
         self.root = root
-        self.root.title("🌲 Logify ")
+        self.root.title("🌲 Logify")
         self.root.geometry("1000x750")
 
         self.file_path = None
@@ -147,9 +149,19 @@ class ForestApp:
         tk.Button(root, text="⚙ Run Evaluation", command=self.run).pack(pady=5)
         tk.Button(root, text="💾 Save & Exit", command=self.save).pack(pady=5)
 
-        self.tree = ttk.Treeview(root)
+        # TABLE
+        table_frame = tk.Frame(root)
+        table_frame.pack(expand=True, fill="both")
+
+        self.tree_scroll = tk.Scrollbar(table_frame)
+        self.tree_scroll.pack(side="right", fill="y")
+
+        self.tree = ttk.Treeview(table_frame, yscrollcommand=self.tree_scroll.set)
         self.tree.pack(expand=True, fill="both")
 
+        self.tree_scroll.config(command=self.tree.yview)
+
+        # CHART
         self.chart_frame = tk.Frame(root)
         self.chart_frame.pack(expand=True, fill="both")
 
@@ -226,25 +238,28 @@ class ForestApp:
             self.tree.insert("", "end", values=list(row))
 
     # -------------------------
-    # FIXED COLORED PIE CHART + LEGEND
+    # FIXED COLORS + NICE LEGEND
     # -------------------------
+
     def show_chart(self, df):
         for widget in self.chart_frame.winfo_children():
             widget.destroy()
 
         counts = df["Quality"].value_counts()
 
+        # EXACT COLOR SYSTEM (NO GREY EVER)
         color_map = {
-            "High": "#2ECC71",      # green
-            "Medium": "#F1C40F",    # yellow
-            "Low": "#E67E22",       # orange
-            "Very Low": "#E74C3C"   # red
+            "High": "#2ECC71",
+            "Medium": "#F1C40F",
+            "Low": "#E67E22",
+            "Very Low": "#E74C3C"
         }
 
         labels = list(counts.index)
         sizes = list(counts.values)
+
+        # STRICT mapping (no fallback → no grey bug)
         colors = [color_map[label] for label in labels]
-        #colors = [color_map.get(l, "#CCCCCC") for l in labels]
 
         fig, ax = plt.subplots()
         ax.pie(sizes, labels=labels, autopct="%1.1f%%", colors=colors)
@@ -254,23 +269,26 @@ class ForestApp:
         canvas.draw()
         canvas.get_tk_widget().pack()
 
-        # CLEAN LEGEND BOX
-        legend_frame = tk.Frame(self.chart_frame)
-        legend_frame.pack(pady=10)
+        # =========================
+        # NICE LEGEND (VISUAL PANEL)
+        # =========================
 
-        legend_items = [
-            ("🟢 High", "#2ECC71"),
-            ("🟡 Medium", "#F1C40F"),
-            ("🟠 Low", "#E67E22"),
-            ("🔴 Very Low", "#E74C3C")
-        ]
+        #legend_frame = tk.Frame(self.chart_frame)
+        #legend_frame.pack(pady=10)
 
-        for text, color in legend_items:
-            row = tk.Frame(legend_frame)
-            row.pack(anchor="w")
+        #legend_items = [
+        #    ("High", "#2ECC71", "🟢"),
+        #    ("Medium", "#F1C40F", "🟡"),
+        #    ("Low", "#E67E22", "🟠"),
+        #    ("Very Low", "#E74C3C", "🔴")
+        #]
 
-            tk.Label(row, text="⬤", fg=color, font=("Arial", 12)).pack(side="left")
-            tk.Label(row, text=text, font=("Arial", 11)).pack(side="left")
+        #for name, color, emoji in legend_items:
+        #    row = tk.Frame(legend_frame)
+        #    row.pack(anchor="w")
+
+        #    tk.Label(row, text="⬤", fg=color, font=("Arial", 14, "bold")).pack(side="left")
+        #    tk.Label(row, text=f" {emoji} {name}", font=("Arial", 11)).pack(side="left")
 
     # -------------------------
     def save(self):
@@ -289,8 +307,9 @@ class ForestApp:
 
 
 # =========================
-# RUN
+# RUN APP
 # =========================
+
 if __name__ == "__main__":
     root = tk.Tk()
     app = ForestApp(root)
