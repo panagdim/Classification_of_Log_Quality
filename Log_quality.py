@@ -1,74 +1,41 @@
+# GUI | Including some advanced features
+
 import pandas as pd
 import math
-from tkinter import Tk, filedialog
+import tkinter as tk
+from tkinter import filedialog, messagebox
+from tkinter import ttk
+
 from openpyxl import load_workbook
-from openpyxl.styles import PatternFill, Font
-from openpyxl.formatting.rule import FormulaRule
+from openpyxl.styles import PatternFill
+from openpyxl.utils import get_column_letter
 
-# -------------------------
-# FILE DIALOG
-# -------------------------
-def select_file():
-    root = Tk()
-    root.withdraw()
-    return filedialog.askopenfilename(
-        title="Select Excel File",
-        filetypes=[("Excel files", "*.xlsx *.xls")]
-    )
+import matplotlib.pyplot as plt
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
 
-# -------------------------
-# SAFE BOOLEAN
-# -------------------------
-def to_bool(val):
-    return str(val).strip().lower() in ["true", "1", "yes"]
-
-
-# -------------------------
-# CLAMP VALUES
-# -------------------------
+# =========================
+# UTILITIES
+# =========================
 def clamp(value, min_val, max_val):
     return max(min_val, min(max_val, value))
 
 
-# -------------------------
-# VOLUME (m³)
-# -------------------------
+def to_bool(val):
+    return str(val).strip().lower() in ["true", "1", "yes"]
+
+
 def calculate_volume(length, diameter_cm):
-    diameter_m = diameter_cm / 100
-    radius = diameter_m / 2
-    return round(math.pi * radius**2 * length, 4)
+    radius = (diameter_cm / 100) / 2
+    return round(math.pi * radius ** 2 * length, 4)
 
 
-# -------------------------
-# FIX DATA LOGIC
-# -------------------------
-def fix_defects(df):
-
-    # Knots
-    df["Count_Knots"] = df.apply(
-        lambda r: max(1, int(r["Count_Knots"])) if r["Has_Knots"] else 0,
-        axis=1
-    )
-
-    # Cracks
-    df["Count_Cracks"] = df.apply(
-        lambda r: max(1, int(r["Count_Cracks"])) if r["Has_Cracks"] else 0,
-        axis=1
-    )
-
-    return df
-
-
-# -------------------------
-# EVALUATION MODEL
-# -------------------------
+# =========================
+# MODEL
+# =========================
 def evaluate_log(length, diameter, knots, cracks,
                  has_forking, has_bend, has_disease):
 
-    # -------------------------
-    # PERFECT LOG OVERRIDE
-    # -------------------------
     no_defects = (
         knots == 0 and cracks == 0 and
         not has_forking and not has_bend and not has_disease
@@ -77,215 +44,254 @@ def evaluate_log(length, diameter, knots, cracks,
     if no_defects and length >= 7 and diameter >= 80:
         return 95, "High"
 
-    # -------------------------
-    # SIZE SCORE
-    # -------------------------
     length_score = 45 * (1 - math.exp(-0.4 * (length - 2)))
     diameter_score = 45 * (diameter / 150) ** 0.85
     size_score = length_score + diameter_score
 
-    # -------------------------
-    # DEFECT PENALTIES
-    # -------------------------
-    knot_penalty = knots * 1.8
-    crack_penalty = cracks * (2.2 + 0.25 * length)
-
-    fork_penalty = 8 if has_forking else 0
-    bend_penalty = 6 if has_bend else 0
-    disease_penalty = 12 if has_disease else 0
-
-    defect_penalty = (
-        knot_penalty +
-        crack_penalty +
-        fork_penalty +
-        bend_penalty +
-        disease_penalty
+    penalty = (
+        knots * 1.8 +
+        cracks * (2.2 + 0.25 * length) +
+        (8 if has_forking else 0) +
+        (6 if has_bend else 0) +
+        (12 if has_disease else 0)
     )
 
-    # -------------------------
-    # INTERACTIONS
-    # -------------------------
-    interaction_penalty = 0
-
+    interaction = 0
     if cracks > 0 and has_disease:
-        interaction_penalty += 6
-
+        interaction += 6
     if knots > 5 and cracks > 3:
-        interaction_penalty += 5
-
+        interaction += 5
     if length > 7 and has_bend:
-        interaction_penalty += 4
-
+        interaction += 4
     if has_forking:
-        interaction_penalty += length * 0.4
+        interaction += length * 0.4
 
-    # -------------------------
-    # FINAL SCORE
-    # -------------------------
-    score = size_score - defect_penalty - interaction_penalty
+    score = size_score - penalty - interaction
 
-    # Bonus for clean logs
     if no_defects:
         score += 10
 
     score = max(0, min(100, score))
 
-    # -------------------------
-    # CATEGORY
-    # -------------------------
     if score >= 80:
-        quality = "High"
+        return score, "High"
     elif score >= 60:
-        quality = "Medium"
+        return score, "Medium"
     elif score >= 40:
-        quality = "Low"
+        return score, "Low"
     else:
-        quality = "Very Low"
-
-    return round(score, 2), quality
+        return score, "Very Low"
 
 
-# -------------------------
-# MAIN PIPELINE
-# -------------------------
-file_path = select_file()
+# =========================
+# EXCEL FORMAT
+# =========================
+def format_excel(path):
+    wb = load_workbook(path)
+    ws = wb.active
 
-if not file_path:
-    print("❌ No file selected")
-    exit()
+    for col in ws.columns:
+        max_len = 0
+        col_letter = get_column_letter(col[0].column)
 
-df = pd.read_excel(file_path)
-
-# -------------------------
-# CLEAN DATA TYPES
-# -------------------------
-df["Has_Knots"] = df["Has_Knots"].apply(to_bool)
-df["Has_Cracks"] = df["Has_Cracks"].apply(to_bool)
-df["Has_Forking"] = df["Has_Forking"].apply(to_bool)
-df["Has_Bend"] = df["Has_Bend"].apply(to_bool)
-df["Has_Disease"] = df["Has_Disease"].apply(to_bool)
-
-df["Count_Knots"] = df["Count_Knots"].fillna(0)
-df["Count_Cracks"] = df["Count_Cracks"].fillna(0)
-
-# -------------------------
-# FIX LOGIC ISSUES
-# -------------------------
-df = fix_defects(df)
-
-# -------------------------
-# PROCESS
-# -------------------------
-scores = []
-qualities = []
-volumes = []
-
-for _, row in df.iterrows():
-
-    # enforce realistic bounds
-    length = clamp(row["Length_m"], 2, 10)
-    diameter = clamp(row["Diameter_cm"], 10, 150)
-
-    knots = int(row["Count_Knots"])
-    cracks = int(row["Count_Cracks"])
-
-    volume = calculate_volume(length, diameter)
-
-    score, quality = evaluate_log(
-        length, diameter, knots, cracks,
-        row["Has_Forking"],
-        row["Has_Bend"],
-        row["Has_Disease"]
-    )
-
-    scores.append(score)
-    qualities.append(quality)
-    volumes.append(volume)
-
-# -------------------------
-# OUTPUT
-# -------------------------
-df["Length_m"] = df["Length_m"].clip(2, 10)
-df["Diameter_cm"] = df["Diameter_cm"].clip(10, 150)
-
-df["Volume_m3"] = volumes
-df["Score"] = scores
-df["Quality"] = qualities
-
-
-# Save first using pandas
-
-output_path = "C:/Users/Dimitris/Desktop/classified_logs.xlsx"
-df.to_excel(output_path, index=False)
-
-# -------------------------
-# OPEN WITH OPENPYXL
-# -------------------------
-wb = load_workbook(output_path)
-ws = wb.active
-
-# -------------------------
-# AUTO COLUMN WIDTH
-# -------------------------
-for col in ws.columns:
-    max_length = 0
-    col_letter = col[0].column_letter
-
-    for cell in col:
-        try:
+        for cell in col:
             if cell.value:
-                max_length = max(max_length, len(str(cell.value)))
-        except:
-            pass
+                max_len = max(max_len, len(str(cell.value)))
 
-    ws.column_dimensions[col_letter].width = max_length + 2
+        ws.column_dimensions[col_letter].width = max_len + 2
+
+    colors = {
+        "High": "2ECC71",
+        "Medium": "F1C40F",
+        "Low": "E67E22",
+        "Very Low": "E74C3C"
+    }
+
+    quality_col = None
+    for cell in ws[1]:
+        if cell.value == "Quality":
+            quality_col = cell.column_letter
+
+    for row in range(2, ws.max_row + 1):
+        cell = ws[f"{quality_col}{row}"]
+        if cell.value in colors:
+            cell.fill = PatternFill(
+                start_color=colors[cell.value],
+                end_color=colors[cell.value],
+                fill_type="solid"
+            )
+
+    wb.save(path)
 
 
-# -------------------------
-# CONDITIONAL FORMATTING
-# -------------------------
-green_fill = PatternFill(start_color="C6EFCE", end_color="C6EFCE", fill_type="solid")
-yellow_fill = PatternFill(start_color="FFEB9C", end_color="FFEB9C", fill_type="solid")
-orange_fill = PatternFill(start_color="F4B084", end_color="F4B084", fill_type="solid")
-red_fill = PatternFill(start_color="FFC7CE", end_color="FFC7CE", fill_type="solid")
+# =========================
+# GUI APP
+# =========================
+class ForestApp:
+    def __init__(self, root):
+        self.root = root
+        self.root.title("🌲 Logify ")
+        self.root.geometry("1000x750")
 
-# Find Score column letter
-score_col = None
-quality_col = None
+        self.file_path = None
+        self.df = None
 
-for cell in ws[1]:
-    if cell.value == "Score":
-        score_col = cell.column_letter
-    if cell.value == "Quality":
-        quality_col = cell.column_letter
+        tk.Label(
+            root,
+            text="🌲🪵 Dashboard 🪵🌲",
+            font=("Arial", 16, "bold"),
+            fg="dark green"
+        ).pack(pady=10)
+
+        tk.Button(root, text="📂 Load Excel", command=self.load_file).pack(pady=5)
+        tk.Button(root, text="⚙ Run Evaluation", command=self.run).pack(pady=5)
+        tk.Button(root, text="💾 Save & Exit", command=self.save).pack(pady=5)
+
+        self.tree = ttk.Treeview(root)
+        self.tree.pack(expand=True, fill="both")
+
+        self.chart_frame = tk.Frame(root)
+        self.chart_frame.pack(expand=True, fill="both")
+
+    # -------------------------
+    def load_file(self):
+        self.file_path = filedialog.askopenfilename(
+            filetypes=[("Excel files", "*.xlsx *.xls")]
+        )
+
+        if self.file_path:
+            self.df = pd.read_excel(self.file_path)
+            messagebox.showinfo("Loaded", "File loaded successfully")
+
+    # -------------------------
+    def run(self):
+        if self.df is None:
+            messagebox.showerror("Error", "Load file first")
+            return
+
+        df = self.df.copy()
+
+        df["Count_Knots"] = df["Count_Knots"].fillna(0)
+        df["Count_Cracks"] = df["Count_Cracks"].fillna(0)
+
+        df["Has_Forking"] = df["Has_Forking"].apply(to_bool)
+        df["Has_Bend"] = df["Has_Bend"].apply(to_bool)
+        df["Has_Disease"] = df["Has_Disease"].apply(to_bool)
+
+        scores, qualities, volumes = [], [], []
+
+        for _, row in df.iterrows():
+            length = clamp(row["Length_m"], 2, 10)
+            diameter = clamp(row["Diameter_cm"], 10, 150)
+
+            volume = calculate_volume(length, diameter)
+
+            score, quality = evaluate_log(
+                length, diameter,
+                int(row["Count_Knots"]),
+                int(row["Count_Cracks"]),
+                row["Has_Forking"],
+                row["Has_Bend"],
+                row["Has_Disease"]
+            )
+
+            scores.append(score)
+            qualities.append(quality)
+            volumes.append(volume)
+
+        df["Volume_m3"] = volumes
+        df["Score"] = [f"{s:.1f} / 100" for s in scores]
+        df["Quality"] = qualities
+
+        self.df = df
+
+        self.show_table(df)
+        self.show_chart(df)
+
+        messagebox.showinfo("Done", "Evaluation complete!")
+
+    # -------------------------
+    def show_table(self, df):
+        self.tree.delete(*self.tree.get_children())
+
+        cols = list(df.columns)
+        self.tree["columns"] = cols
+        self.tree["show"] = "headings"
+
+        for col in cols:
+            self.tree.heading(col, text=col, anchor="center")
+            self.tree.column(col, width=120, anchor="center")
+
+        for _, row in df.iterrows():
+            self.tree.insert("", "end", values=list(row))
+
+    # -------------------------
+    # FIXED COLORED PIE CHART + LEGEND
+    # -------------------------
+    def show_chart(self, df):
+        for widget in self.chart_frame.winfo_children():
+            widget.destroy()
+
+        counts = df["Quality"].value_counts()
+
+        color_map = {
+            "High": "#2ECC71",      # green
+            "Medium": "#F1C40F",    # yellow
+            "Low": "#E67E22",       # orange
+            "Very Low": "#E74C3C"   # red
+        }
+
+        labels = list(counts.index)
+        sizes = list(counts.values)
+        colors = [color_map[label] for label in labels]
+        #colors = [color_map.get(l, "#CCCCCC") for l in labels]
+
+        fig, ax = plt.subplots()
+        ax.pie(sizes, labels=labels, autopct="%1.1f%%", colors=colors)
+        #ax.set_title("🌲 Log Quality Breakdown")
+
+        canvas = FigureCanvasTkAgg(fig, master=self.chart_frame)
+        canvas.draw()
+        canvas.get_tk_widget().pack()
+
+        # CLEAN LEGEND BOX
+        legend_frame = tk.Frame(self.chart_frame)
+        legend_frame.pack(pady=10)
+
+        legend_items = [
+            ("🟢 High", "#2ECC71"),
+            ("🟡 Medium", "#F1C40F"),
+            ("🟠 Low", "#E67E22"),
+            ("🔴 Very Low", "#E74C3C")
+        ]
+
+        for text, color in legend_items:
+            row = tk.Frame(legend_frame)
+            row.pack(anchor="w")
+
+            tk.Label(row, text="⬤", fg=color, font=("Arial", 12)).pack(side="left")
+            tk.Label(row, text=text, font=("Arial", 11)).pack(side="left")
+
+    # -------------------------
+    def save(self):
+        if self.df is None:
+            messagebox.showerror("Error", "No data")
+            return
+
+        output_path = self.file_path.replace(".xlsx", "_evaluated.xlsx")
+        self.df.to_excel(output_path, index=False)
+
+        format_excel(output_path)
+
+        messagebox.showinfo("Saved", "File saved successfully")
+
+        self.root.destroy()
 
 
-# Apply rules on Quality column
-ws.conditional_formatting.add(
-    f"{quality_col}2:{quality_col}{ws.max_row}",
-    FormulaRule(formula=[f'${quality_col}2="High"'], fill=green_fill)
-)
-
-ws.conditional_formatting.add(
-    f"{quality_col}2:{quality_col}{ws.max_row}",
-    FormulaRule(formula=[f'${quality_col}2="Medium"'], fill=yellow_fill)
-)
-
-ws.conditional_formatting.add(
-    f"{quality_col}2:{quality_col}{ws.max_row}",
-    FormulaRule(formula=[f'${quality_col}2="Low"'], fill=orange_fill)
-)
-
-ws.conditional_formatting.add(
-    f"{quality_col}2:{quality_col}{ws.max_row}",
-    FormulaRule(formula=[f'${quality_col}2="Very Low"'], fill=red_fill)
-)
-
-# -------------------------
-# SAVE FINAL FILE
-# -------------------------
-wb.save(output_path)
-
-print("🎨 Excel formatting applied!")
-print(f"📁 Final file ready: {output_path}")
-print("✅ Evaluation complete!")
+# =========================
+# RUN
+# =========================
+if __name__ == "__main__":
+    root = tk.Tk()
+    app = ForestApp(root)
+    root.mainloop()
