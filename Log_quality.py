@@ -238,7 +238,7 @@ class ForestApp:
             self.tree.insert("", "end", values=list(row))
 
     # -------------------------
-    # FIXED COLORS + NICE LEGEND
+    # FIXED COLORS + LEGEND
     # -------------------------
 
     def show_chart(self, df):
@@ -269,9 +269,9 @@ class ForestApp:
         canvas.draw()
         canvas.get_tk_widget().pack()
 
-        # =========================
-        # NICE LEGEND (VISUAL PANEL)
-        # =========================
+    # =========================
+    # LEGEND (VISUAL PANEL)
+    # =========================
 
         #legend_frame = tk.Frame(self.chart_frame)
         #legend_frame.pack(pady=10)
