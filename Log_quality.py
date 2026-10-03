@@ -132,7 +132,7 @@ def format_excel(path):
 class ForestApp:
     def __init__(self, root):
         self.root = root
-        self.root.title("🌲 Logify")
+        self.root.title("🌲 ")
         self.root.geometry("1000x750")
 
         self.file_path = None
