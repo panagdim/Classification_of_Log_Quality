@@ -12,4 +12,15 @@ While the system provides a realistic and structured approximation of log qualit
 
 Such calibration would allow the scoring system to better reflect regional forestry practices and commercial timber valuation systems, improving its reliability for operational or industrial use.
 
+
+HOW TO USE:
+
+Step 1: Run the application and click “Create Empty Template.”
+
+Step 2: Fill in the template with your data.
+
+Step 3: Run the application again, load your completed Excel file, and let the application do the rest for you.
+
+ENJOY!!!
+
 Contributor: Dimitris Panagiotidis
